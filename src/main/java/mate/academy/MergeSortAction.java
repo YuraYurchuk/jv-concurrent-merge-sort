@@ -1,15 +1,14 @@
 package mate.academy;
 
 import java.util.Arrays;
-import java.util.concurrent.ForkJoinTask;
+import java.util.concurrent.RecursiveTask;
 
-public class MergeSortAction extends ForkJoinTask<Integer[]> {
+public class MergeSortAction extends RecursiveTask<Integer[]> {
 
     public static final int THRESHOLD = 4;
     private final int startElement;
     private final int endElement;
     private final int[] array;
-    private Integer[] result;
 
     public MergeSortAction(int[] array) {
         this(array, 0, array.length);
@@ -22,20 +21,9 @@ public class MergeSortAction extends ForkJoinTask<Integer[]> {
     }
 
     @Override
-    public Integer[] getRawResult() {
-        return result;
-    }
-
-    @Override
-    protected void setRawResult(Integer[] value) {
-        result = value;
-    }
-
-    @Override
-    protected boolean exec() {
+    protected Integer[] compute() {
         if (endElement - startElement <= THRESHOLD) {
-            result = sortElement(array, startElement, endElement);
-            return true;
+            return sortElement(array, startElement, endElement);
         }
         int middle = startElement + (endElement - startElement) / 2;
         MergeSortAction left = new MergeSortAction(array, startElement, middle);
@@ -44,11 +32,11 @@ public class MergeSortAction extends ForkJoinTask<Integer[]> {
         right.fork();
         Integer[] leftResult = left.join();
         Integer[] rightResult = right.join();
-        result = merge(leftResult, rightResult);
+        Integer[] result = merge(leftResult, rightResult);
         for (int i = 0; i < result.length; i++) {
             array[startElement + i] = result[i];
         }
-        return true;
+        return result;
     }
 
     private Integer[] sortElement(int[] array, int startElement, int endElement) {
